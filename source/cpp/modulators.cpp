@@ -55,6 +55,11 @@ void Modulator::setOrder(int O)
 
 }
 
+int Modulator::getBitspersymbol()
+{
+    return bitspersymbol;
+}
+
 ModulatorBPSK::ModulatorBPSK(){
     mod_order = 2;
     bitspersymbol = 1;

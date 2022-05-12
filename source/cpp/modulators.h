@@ -15,6 +15,7 @@ class Modulator
         virtual std::complex<double>* modulate(std::string &input) = 0; 
 
         void setOrder(int O);
+        int getBitspersymbol();
 
     protected:
         int mod_order;
