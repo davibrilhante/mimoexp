@@ -3,19 +3,13 @@
 
 import numpy as np
 from abc import ABC, abstractmethod
+
+from utils import base_2_to_10_array
 from channel import AwgnRayleighChannel
 from demodulators import DemodulatorBPSK
 from detectors import ZeroForcing
 
 __all__ = ["Modulator","ModulatorBPSK", "ModulatorQPSK", "ModulatorMPSK"]
-
-def base_2_to_10_array(arr):#, i1, i2):
-    res = 0
-    for bit in arr:#[i1:i2][::-1]:
-        bit = int(bit)
-        res = (res << 1) ^ bit
-
-    return res
 
 class Modulator:
     def __init__(self, order):

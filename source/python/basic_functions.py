@@ -37,8 +37,11 @@ def ber_average_per_user(X_tx, X_rx):
 def rayleigh_channel(M,K):
     #TRUE CHANNEL 
     Gg =  np.random.normal(0,1,(M,K))+1j*(np.random.normal(0,1,(M,K)))        
+    print(Gg)
     for k in range(K):
+        print(math.sqrt(1/np.var(Gg[:,k])))
         Gg[:,k] = math.sqrt(1/np.var(Gg[:,k]))*Gg[:,k]
+        print(Gg)
     return Gg
 
 

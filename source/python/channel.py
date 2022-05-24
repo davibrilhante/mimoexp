@@ -42,7 +42,7 @@ class AwgnNoise(Noise):
         self.isComplex = True
     
     def snrdb_to_sigma(self, snr, signal, L=1):
-        if not isinstance(signal[0], list) == 1:
+        if not isinstance(signal[0], list):
             sig_power = L*sum(np.absolute(signal)**2)/len(signal)
         else:
             sig_power = L*sum(sum(np.absolute(signal)**2))/len(signal)
