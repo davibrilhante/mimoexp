@@ -33,5 +33,6 @@ def bit_error_rate(orig, recv)->float:
     error = bit_error(orig, recv)
     return error/len(orig)
 
-def moorePenroseInv(matrix):
-    return np.dot(np.linalg.pinv(np.dot(np.conj(matrix), matrix)), np.conj(matrix))
+
+def tolin(s):
+    return 10**(0.1*s)
