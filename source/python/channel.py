@@ -2,6 +2,7 @@
 # -*- coding : utf8 -*-
 
 import numpy as np
+from utils import tolin
 
 class Noise:
     def __init__(self, size):
@@ -47,14 +48,16 @@ class AwgnNoise(Noise):
         else:
             sig_power = L*sum(sum(np.absolute(signal)**2))/len(signal)
 
-        self.sigma = np.sqrt(sig_power/(2*10**(0.1*snr)))
+        N0 = sig_power/tolin(snr)
+
+        self.sigma = np.sqrt(N0/2)
 
     def sample(self):
         if self.isComplex:
-            nsample = (np.random.normal(0, self.sigma, self.size) + 
-                    1j*(np.random.normal(0, self.sigma, self.size)))/np.sqrt(2)
+            nsample = self.sigma*(np.random.standard_normal(self.size) + 
+                    1j*np.random.standard_normal(self.size)) #/np.sqrt(2)
         else:
-            nsample = np.random.normal(0, self.sigma, self.size)  
+            nsample = self.sigma*np.random.normal(self.size)
             
         return nsample
 
@@ -98,19 +101,23 @@ class AwgnRayleighChannel(Channel):
             self.fading = fading
 
     def response(self, signal, snr, L=1):
-        self.noise.snrdb_to_sigma(snr, signal, L)
-
         if np.isrealobj(signal):
             self.noise.isComplex = False
         else:
             self.noise.isComplex = True
 
         channel_sample = []
+        noise_var = []
 
 
         received = []
         for i in signal:
             channel_sample.append(self.fading.realization())
-            received.append(np.dot(channel_sample[-1],np.transpose(i)) + self.noise.sample())
 
-        return received, channel_sample
+            signal_at_rx = np.matmul(channel_sample[-1],np.transpose(i))
+            self.noise.snrdb_to_sigma(snr, signal_at_rx, L)
+            noise_var.append(self.noise.sigma**2)
+
+            received.append(signal_at_rx + self.noise.sample())
+
+        return received, channel_sample, noise_var
