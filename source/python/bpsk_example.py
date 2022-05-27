@@ -93,7 +93,7 @@ if __name__ == '__main__':
             lmse_detected = []
             for n, symbol in enumerate(received):
                 lmse_detected.append(lmse_detector.detect(
-                                symbol, channel_estimate[n], constellation, noisevar[n]))
+                                symbol, channel_estimate[n], constellation, SNR))#noisevar[n]))
 
             demodulated = demodulator.demodulate(lmse_detected)
 
