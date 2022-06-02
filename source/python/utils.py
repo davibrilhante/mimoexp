@@ -36,3 +36,20 @@ def bit_error_rate(orig, recv)->float:
 
 def tolin(s):
     return 10**(0.1*s)
+
+def binaryToGray(b):
+    b = int(b,2)
+    b ^= (b>>1)
+
+    return bin(b)[2:]
+
+def grayToBinary(b):
+    """Convert Gray codeword to binary and return it."""
+    b = int(b, 2) # convert to int
+ 
+    mask = b
+    while mask != 0:
+        mask >>= 1
+        b ^= mask
+ 
+    return bin(b)[2:]

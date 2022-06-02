@@ -4,7 +4,7 @@
 import numpy as np
 from abc import ABC, abstractmethod
 
-from utils import base_2_to_10_array
+from utils import base_2_to_10_array, binaryToGray
 from channel import AwgnRayleighChannel
 from demodulators import DemodulatorBPSK
 from detectors import ZeroForcing
@@ -84,3 +84,37 @@ class ModulatorMPSK(Modulator):
         
         return modulated
 
+class ModulatorMQAM(Modulator):
+    '''Based on the python code for QAM modulator found at:
+    https://www.gaussianwaves.com/2012/10/qam-modulation-simulation-matlab-python/
+    '''
+    def __init__(self, order):
+        super().__init__(order)
+        self.graycode = True
+
+    def modulate(self, data_input):
+        if self.mod_order == 0:
+            raise AttributeError('Modulation order not especified!')
+
+        self.bits_per_symbol = np.log2(self.mod_order)
+        grid_dimension = np.sqrt(self.mod_order).astype(int)
+
+        modulated = []
+        chunk = '' 
+        for bit in data_input:
+            chunk += bit
+            if len(chunk) == self.bits_per_symbol:
+                if self.graycode:
+                    chunk = binaryToGray(chunk)
+
+                symb = base_2_to_10_array(chunk)
+
+                (x, y) = np.divmod(symb, grid_dimension)
+                i_sample = 2*x+1-grid_dimension
+                q_sample = 2*y+1-grid_dimension
+
+                modulated.append(i_sample + q_sample*1j)
+
+                chunk = ''
+
+        return modulated
