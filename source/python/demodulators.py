@@ -115,8 +115,8 @@ class DemodulatorMQAM(Demodulator):
                     x=(np.real(symbol)+grid_dimension-1)/2
                     y=(np.imag(symbol)+grid_dimension-1)/2
 
-                    data = bin(int(x*grid_dimension + y))[2:]
-
+                    data = np.binary_repr(int(x*grid_dimension + y),
+                                            width=self.bits_per_symbol)
                     if self.graycode:
                         data = grayToBinary(data)
 
@@ -126,7 +126,8 @@ class DemodulatorMQAM(Demodulator):
                 x=(np.real(symbol)+grid_dimension-1)/2
                 y=(np.imag(symbol)+grid_dimension-1)/2
 
-                data = bin(int(x*grid_dimension + y))[2:]
+                data = np.binary_repr(int(x*grid_dimension + y),
+                                        width=self.bits_per_symbol)
 
                 if self.graycode:
                     data = grayToBinary(data)

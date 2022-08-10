@@ -38,13 +38,16 @@ def tolin(s):
     return 10**(0.1*s)
 
 def binaryToGray(b):
+    bitlen = len(b)
     b = int(b,2)
     b ^= (b>>1)
 
-    return bin(b)[2:]
+ 
+    return np.binary_repr(b, bitlen)
 
 def grayToBinary(b):
     """Convert Gray codeword to binary and return it."""
+    bitlen = len(b)
     b = int(b, 2) # convert to int
  
     mask = b
@@ -52,4 +55,4 @@ def grayToBinary(b):
         mask >>= 1
         b ^= mask
  
-    return bin(b)[2:]
+    return np.binary_repr(b, bitlen)
