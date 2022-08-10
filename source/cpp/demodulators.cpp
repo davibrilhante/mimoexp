@@ -67,6 +67,7 @@ string DemodulatorQPSK::demodulate(complex<double>* input, int data_len=1)
     return output;
 }
 
+/*
 int main()
 {
     string data = "0001101100011011";
@@ -82,4 +83,4 @@ int main()
     cout<<output<<endl;
     
     return 0;
-}
+}*/
