@@ -7,7 +7,10 @@ from channel import AwgnRayleighChannel
 from utils import gen_binary_str, bit_error, bit_error_rate
 from modulators import ModulatorQPSK
 from demodulators import DemodulatorQPSK
-from detectors import ZeroForcing, LinearMmse, ZeroForcingSic
+from detectors import ZeroForcing
+from detectors import LinearMmse
+from detectors import ZeroForcingSic
+from detectors import SphereDetector 
 
 from argparse import ArgumentParser
 from timeit import default_timer
@@ -26,6 +29,7 @@ group = parser.add_mutually_exclusive_group()
 group.add_argument('--zf',action='store_true')
 group.add_argument('--mmse',action='store_true')
 group.add_argument('--zfsic',action='store_true')
+group.add_argument('--sd',action='store_true')
 
 args = parser.parse_args()
 
@@ -102,6 +106,16 @@ if __name__ == '__main__':
                 sic_detected.append(sic_detector.detect(symbol, channel_estimate[n], constellation))
 
             demodulated =  demodulator.demodulate(sic_detected)
+
+        elif args.sd:    
+            print('Executions %d'%(i+1))
+            # Symbol by symbol Sphere Detector detection
+            sd_detector = SphereDetector()
+            sd_detected = []
+            for n, symbol in enumerate(received):
+                sd_detected.append(sd_detector.detect(symbol, channel_estimate[n], constellation, SNR))
+
+            demodulated =  demodulator.demodulate(sd_detected)
 
         stop = default_timer()
 
