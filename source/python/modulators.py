@@ -118,3 +118,12 @@ class ModulatorMQAM(Modulator):
                 chunk = ''
 
         return modulated
+
+    def constellation(self):
+        stream = ''
+
+        for num in range(self.mod_order):
+            stream += np.binary_repr(num,int(self.bits_per_symbol))
+
+        return self.modulate(stream)
+

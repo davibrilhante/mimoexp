@@ -2,7 +2,6 @@
 # -*- docing : utf8 -*-
 
 import numpy as np
-from pypapi import events, papi_high as high
 
 from channel import AwgnRayleighChannel
 
@@ -68,11 +67,12 @@ if __name__ == '__main__':
 
         data = gen_binary_str(data_len)
 
-        #BPSK modulation example
+        #MQAM modulation example
         modulator = ModulatorMQAM(args.morder)
+        modulator.graycode = False
         demodulator = DemodulatorMQAM(args.morder)
+        demodulator.graycode = False
         modulated_data = modulator.modulate(data)
-
 
         #Reshape the signal to the number of transmitters antennas
         encoded_data = np.reshape(modulated_data,(-1,tx_dimension))
@@ -81,10 +81,11 @@ if __name__ == '__main__':
         #Creating the channel to add interference and noise
         channel = AwgnRayleighChannel(tx_dimension,rx_dimension)
         
-        #Signal at the receivers antennas
+        #Signal at the receiver antennas
         received, channel_estimate, noisevar = channel.response(encoded_data, SNR)
         sqrth = np.sqrt(2)/2
-        constellation = np.multiply(sqrth,[1+1j,-1+1j,-1-1j,1-1j]) #[-1+0j, 1+0j]
+        #constellation = [-1-1j, -1+1j, 1-1j,1+1j] #np.multiply(sqrth,[1+1j,-1+1j,-1-1j,1-1j]) #[-1+0j, 1+0j]
+        constellation = modulator.constellation()
 
         # Symbol by symbol Zero-Forcing detection
         if args.zf:
