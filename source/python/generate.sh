@@ -6,6 +6,7 @@ SNR=`seq -10 30`
 
 for d in ${DETECTORS[@]}
 do
+    mkdir -p results/$d
     for l in ${LENGTH[@]}
     do
         for a in ${ANTENNAS[@]}
@@ -14,7 +15,7 @@ do
             do
                 for s in ${SNR[@]}
                 do
-                    echo -e "python3 mqam_example.py --$d -l $l --tx $a --rx $a -m $o --snr $s >> $d-$l-$a-$o" >> submit
+                    echo -e "python3 mqam_example.py --$d -l $l --tx $a --rx $a -m $o --snr $s >> results/$d/$d-$l-$a-$o" >> submit
                 done
             done
         done
