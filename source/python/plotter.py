@@ -19,8 +19,8 @@ if __name__ == '__main__':
                 'color':'b',
                 'label':'ZF',
                 'ls':'-'
-                }
-            'zf-sic':{
+                },
+            'zfsic':{
                 'file': 'zf-sic',
                 'color':'b',
                 'label':'ZF-SIC',
@@ -39,41 +39,48 @@ if __name__ == '__main__':
     ax2.set_ylabel('Time (s)', color='b')
     ax2.tick_params(axis='y', colors='b')
 
-
-    for tec in techniques.keys():
-        filename = techniques[tec]['file']
-        index = []
-        ber_mean = []
-        time_mean = []
-
-        with open(filename) as infile:
-            for line in infile.readlines():
-                stat = literal_eval(line)
-                index.append(stat['snr'])
-                ber_mean.append(stat['ber_mean'])
-                time_mean.append(stat['time_mean'])
-
-        for n, lista in enumerate([ber_mean, time_mean]):
-            _index = index.copy()
-            zipped = zip(_index, lista)
-            sorted_= sorted(zipped)
-            tupled = zip(*sorted_)
-
-            _index, lista= [list(Tuple) for Tuple in tupled]
+    stream_length = [256, 512, 1024]
+    m_order = [4, 16]
+    n_antennas = [2,4,8]
 
 
-            if n == 0:
-                ax1.semilogy(_index, lista, 
-                        label=techniques[tec]['label'],
-                        color='r',#techniques[tec]['color'],
-                        linestyle=techniques[tec]['ls'])
-            else:
-                ax2.semilogy(_index, lista, 
-                        color='b',#techniques[tec]['color'],
-                        linestyle=techniques[tec]['ls'])
+    for length in stream_length:
+        for n_t in n_antennas:
+            for m in m_order:
+                for tec in techniques.keys():
+                    filename = 'results/{dir_}/{prefix}-{len_}-{n}-{m}'.format(dir_=tec,prefix=tec,len_=length,n=n_t,m=m) #techniques[tec]['file']
+                    index = []
+                    ber_mean = []
+                    time_mean = []
 
-    plt.title('BPSK 4x4 AWGN Rayleigh Channel') 
-    #plt.grid()
-    ax1.legend()
-    fig.tight_layout()
-    plt.show()
+                    with open(filename) as infile:
+                        for line in infile.readlines():
+                            stat = literal_eval(line)
+                            index.append(stat['snr'])
+                            ber_mean.append(stat['ber_mean'])
+                            time_mean.append(stat['time_mean'])
+
+                    for n, lista in enumerate([ber_mean, time_mean]):
+                        _index = index.copy()
+                        zipped = zip(_index, lista)
+                        sorted_= sorted(zipped)
+                        tupled = zip(*sorted_)
+
+                        _index, lista= [list(Tuple) for Tuple in tupled]
+
+
+                        if n == 0:
+                            ax1.semilogy(_index, lista, 
+                                    label=techniques[tec]['label'],
+                                    color='r',#techniques[tec]['color'],
+                                    linestyle=techniques[tec]['ls'])
+                        else:
+                            ax2.semilogy(_index, lista, 
+                                    color='b',#techniques[tec]['color'],
+                                    linestyle=techniques[tec]['ls'])
+
+                plt.title('BPSK 4x4 AWGN Rayleigh Channel') 
+                plt.grid()
+                ax1.legend()
+                fig.tight_layout()
+                plt.show()
