@@ -100,8 +100,10 @@ if __name__ == '__main__':
             lmse_detector = LinearMmse()
             lmse_detected = []
             for n, symbol in enumerate(received):
+                print(noisevar[n], lmse_detector.snrdb_to_sigma(SNR,symbol))
                 lmse_detected.append(lmse_detector.detect(
-                                symbol, channel_estimate[n], constellation, noisevar[n]))
+                                symbol, channel_estimate[n], constellation, SNR))
+                                #symbol, channel_estimate[n], constellation, noisevar[n]))
 
             demodulated = demodulator.demodulate(lmse_detected)
 

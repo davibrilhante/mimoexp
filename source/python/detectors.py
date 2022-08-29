@@ -36,11 +36,25 @@ class LinearMmse(Detector):
     def __init__(self):
         super().__init__()
 
+    def snrdb_to_sigma(self, snr, data_input, L=1):
+        if not isinstance(data_input[0], list):
+            sig_power = L*sum(np.absolute(data_input)**2)/len(data_input)
+        else:
+            sig_power = L*sum(sum(np.absolute(data_input)**2))/len(data_input)
+
+        #print(sig_power, tolin(snr))
+
+        N0 = sig_power/(tolin(snr+1))
+
+        return np.sqrt(N0/2)
+
     def detect(self, data_input, channel, constellation, snr): #noiseVar):
         f1 = np.matmul(np.transpose(np.conj(channel)), channel)
+
         #f2 = 2*noiseVar*np.identity(channel.shape[1])
         #f2 = (channel.shape[1]/tolin(snr))*np.identity(channel.shape[1])
-        f2 = (2*channel.shape[0]/channel.shape[1]*tolin(-1*snr))*np.identity(channel.shape[1])
+        #f2 = (2*channel.shape[0]/channel.shape[1]*tolin(-1*snr))*np.identity(channel.shape[1])
+        f2 = self.snrdb_to_sigma(snr, data_input)*np.identity(channel.shape[1])
 
         channel_transf = np.matmul(np.linalg.pinv(f1+f2),np.transpose(np.conj(channel)))
 
