@@ -96,26 +96,33 @@ class ModulatorMQAM(Modulator):
         if self.mod_order == 0:
             raise AttributeError('Modulation order not especified!')
 
-        self.bits_per_symbol = np.log2(self.mod_order)
-        grid_dimension = np.sqrt(self.mod_order).astype(int)
+        elif self.mod_order == 2:
+            #If the order is 2, it is just as the same as BPSK
+            modulated = []
+            for bit in data_input:
+                modulated.append((2*int(bit) - 1) + 0j)
 
-        modulated = []
-        chunk = '' 
-        for bit in data_input:
-            chunk += bit
-            if len(chunk) == self.bits_per_symbol:
-                if self.graycode:
-                    chunk = binaryToGray(chunk)
+        else:
+            self.bits_per_symbol = np.log2(self.mod_order)
+            grid_dimension = np.sqrt(self.mod_order).astype(int)
 
-                symb = base_2_to_10_array(chunk)
+            modulated = []
+            chunk = '' 
+            for bit in data_input:
+                chunk += bit
+                if len(chunk) == self.bits_per_symbol:
+                    if self.graycode:
+                        chunk = binaryToGray(chunk)
 
-                (x, y) = np.divmod(symb, grid_dimension)
-                i_sample = 2*x+1-grid_dimension
-                q_sample = 2*y+1-grid_dimension
+                    symb = base_2_to_10_array(chunk)
 
-                modulated.append(i_sample + q_sample*1j)
+                    (x, y) = np.divmod(symb, grid_dimension)
+                    i_sample = 2*x+1-grid_dimension
+                    q_sample = 2*y+1-grid_dimension
 
-                chunk = ''
+                    modulated.append(i_sample + q_sample*1j)
+
+                    chunk = ''
 
         return modulated
 
