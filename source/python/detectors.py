@@ -52,9 +52,10 @@ class LinearMmse(Detector):
         f1 = np.matmul(np.transpose(np.conj(channel)), channel)
 
         #f2 = 2*noiseVar*np.identity(channel.shape[1])
-        #f2 = (channel.shape[1]/tolin(snr))*np.identity(channel.shape[1])
+        f2 = (channel.shape[1]/tolin(snr))*np.identity(channel.shape[1])
         #f2 = (2*channel.shape[0]/channel.shape[1]*tolin(-1*snr))*np.identity(channel.shape[1])
-        f2 = self.snrdb_to_sigma(snr, data_input)*np.identity(channel.shape[1])
+        mod_order = np.log2(len(constellation))
+        #f2 = self.snrdb_to_sigma(snr, data_input, mod_order)*np.identity(channel.shape[1])
 
         channel_transf = np.matmul(np.linalg.pinv(f1+f2),np.transpose(np.conj(channel)))
 

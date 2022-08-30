@@ -1,8 +1,10 @@
-##DETECTORS=('zf' 'mmse' 'zfsic')
-DETECTORS=('mmse')
+rm -f submit
+
+DETECTORS=('zf' 'mmse' 'zfsic')
+###DETECTORS=('mmse')
 LENGTH=(256 512 1024)
 ANTENNAS=(2 4 8)
-ORDER=(4 16)
+ORDER=(2 4 16)
 SNR=`seq -10 30`
 
 for d in ${DETECTORS[@]}

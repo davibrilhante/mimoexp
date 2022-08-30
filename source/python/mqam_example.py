@@ -82,7 +82,7 @@ if __name__ == '__main__':
         channel = AwgnRayleighChannel(tx_dimension,rx_dimension)
         
         #Signal at the receiver antennas
-        received, channel_estimate, noisevar = channel.response(encoded_data, SNR)
+        received, channel_estimate, noisevar = channel.response(encoded_data, SNR, np.log2(args.morder))
         sqrth = np.sqrt(2)/2
         #constellation = [-1-1j, -1+1j, 1-1j,1+1j] #np.multiply(sqrth,[1+1j,-1+1j,-1-1j,1-1j]) #[-1+0j, 1+0j]
         constellation = modulator.constellation()
@@ -100,7 +100,7 @@ if __name__ == '__main__':
             lmse_detector = LinearMmse()
             lmse_detected = []
             for n, symbol in enumerate(received):
-                print(noisevar[n], lmse_detector.snrdb_to_sigma(SNR,symbol))
+                #print(noisevar[n], lmse_detector.snrdb_to_sigma(SNR,symbol))
                 lmse_detected.append(lmse_detector.detect(
                                 symbol, channel_estimate[n], constellation, SNR))
                                 #symbol, channel_estimate[n], constellation, noisevar[n]))
