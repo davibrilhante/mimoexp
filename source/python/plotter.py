@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
 
     stream_length = [256, 512, 1024]
-    m_order = [4, 16]
+    m_order = [2, 4, 16]
     n_antennas = [2,4,8]
 
 

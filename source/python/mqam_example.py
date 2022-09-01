@@ -82,7 +82,7 @@ if __name__ == '__main__':
         channel = AwgnRayleighChannel(tx_dimension,rx_dimension)
         
         #Signal at the receiver antennas
-        received, channel_estimate, noisevar = channel.response(encoded_data, SNR, np.log2(args.morder))
+        received, channel_estimate, noisevar = channel.response(encoded_data, SNR)
         sqrth = np.sqrt(2)/2
         #constellation = [-1-1j, -1+1j, 1-1j,1+1j] #np.multiply(sqrth,[1+1j,-1+1j,-1-1j,1-1j]) #[-1+0j, 1+0j]
         constellation = modulator.constellation()
