@@ -1,6 +1,6 @@
 rm -f submit
 
-DETECTORS=('zf' 'mmse' 'zfsic')
+DETECTORS=('lra') #'zf' 'mmse' 'zfsic')
 ###DETECTORS=('mmse')
 LENGTH=(256 512 1024)
 ANTENNAS=(2 4 8)
