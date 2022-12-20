@@ -11,7 +11,9 @@ from demodulators import DemodulatorMQAM
 from detectors import ZeroForcing
 from detectors import LinearMmse
 from detectors import ZeroForcingSic
+from detectors import MeanSquaredErrorSic
 from detectors import SphereDetector 
+from precoders import LatticeReductionAided
 
 from argparse import ArgumentParser
 from timeit import default_timer
@@ -31,7 +33,9 @@ group = parser.add_mutually_exclusive_group()
 group.add_argument('--zf',action='store_true')
 group.add_argument('--mmse',action='store_true')
 group.add_argument('--zfsic',action='store_true')
+group.add_argument('--lra',action='store_true')
 group.add_argument('--sd',action='store_true')
+group.add_argument('--msesic',action='store_true')
 
 args = parser.parse_args()
 
@@ -115,6 +119,34 @@ if __name__ == '__main__':
                 sic_detected.append(sic_detector.detect(symbol, channel_estimate[n], constellation))
 
             demodulated =  demodulator.demodulate(sic_detected)
+
+        elif args.lra:    
+            precoder = LatticeReductionAided()
+            received, channel_estimate, noisevar = channel.response(encoded_data, SNR)
+            U, h_red = precoder.precode(channel_estimate)
+
+            for i in range(len(encoded_data)):
+                signal = np.matmul(np.matmul(channel_estimate[i],U[i]),encoded_data[i])
+                channel.noise.snrdb_to_sigma(SNR, [signal])
+                received[i] =  signal + channel.noise.sample()
+
+            # Symbol by symbol Zero-Forcing detection
+            sic_detector = ZeroForcingSic()
+            sic_detected = []
+            for n, symbol in enumerate(received):
+                sic_detected.append(sic_detector.detect(symbol, h_red[n], constellation))
+
+            demodulated =  demodulator.demodulate(sic_detected)
+
+        elif args.msesic:
+            lmse_detector = MeanSquaredErrorSic()
+            lmse_detected = []
+            for n, symbol in enumerate(received):
+                lmse_detected.append(lmse_detector.detect(
+                                symbol, channel_estimate[n], constellation, SNR))
+                                #symbol, channel_estimate[n], constellation, noisevar[n]))
+
+            demodulated = demodulator.demodulate(lmse_detected)
 
         elif args.sd:    
             # Symbol by symbol Sphere Detector detection
