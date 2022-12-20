@@ -130,6 +130,122 @@ class ZeroForcingSic(Detector):
         return estimate
 
 
+class MeanSquaredErrorSic(Detector):
+    def __init__(self):
+        super().__init__()
+
+    def detect(self, data_input, channel, constellation, snr):
+        # Based on:  
+        # MMSE Extension of V-BLAST based on Sorted QR Decomposition 
+        #
+        # Dirk Wubben, Ronald Bohnke, Volker Kuhn, and Karl-Dirk Kammeyer 
+
+        estimate = [0 for i in data_input]
+
+        # Table 1 - line 1 
+        CHANNEL = channel
+        
+        f2 = (channel.shape[1]/tolin(snr))*np.identity(channel.shape[1])
+        CHANNEL = np.concatenate((CHANNEL,f2))
+        #for i in f2:
+        #    CHANNEL.append(i)
+
+        R = np.zeros(channel.shape) 
+        #[[0 for j in range(channel.shape[1])] for i in range(channel.shape[0]+channel.shape[1])]
+
+
+        todecode = [n for n in range(channel.shape[1])]
+        norm = []
+
+
+        # Table 1 - lines 2-4
+        for i in range(channel.shape[1]):
+            norm.append(np.linalg.norm(CHANNEL[:,i])**2)
+
+        
+        # Table 1 - lines 5, 6
+        for i in range(channel.shape[1]):
+            k_i = min(zip(todecode, norm), key = lambda x : x[1])[0]
+
+            # Table 1 - line 7
+            tmp = todecode[i]
+            todecode[i] = todecode[k_i]
+            todecode[k_i] = tmp
+
+            tmp = norm[i]
+            norm[i] = norm[k_i]
+            norm[k_i] = tmp
+
+            tmp = R[:,i]
+            R[:,i] = R[:,k_i]
+            R[:,k_i] = tmp
+
+            limit = channel.shape[0] + i - 1
+
+            for j in range(limit):
+                tmp = CHANNEL[j][i]
+                CHANNEL[j][i] = CHANNEL[j][k_i]
+                CHANNEL[j][k_i] = tmp
+
+            # Table 1 - lines 8,9
+            r_i_i = np.sqrt(norm[i])
+            CHANNEL[:,i] /= r_i_i
+
+            # Table 1 - lines 10 - 15
+            for k in range(i+1,channel.shape[1]):
+                r_i_k = np.matmul(np.transpose(np.conj(CHANNEL[:,i])), CHANNEL[:,k])
+                CHANNEL[:,k]=CHANNEL[:,k] - r_i_k*CHANNEL[:,i]
+                norm[k]=norm[k] - (r_i_k**2)
+
+
+        k_min = channel.shape[1]
+
+        Q1 = CHANNEL[:channel.shape[0],:]
+        Q2 = CHANNEL[channel.shape[0]:,:]
+        error = []
+
+        for i in reversed(range(1,channel.shape[1])):
+            for l in range(i):
+                error.append(np.linalg.norm(Q2[l,:i])**2)
+
+            k_ii = min(zip(range(i),error), key= lambda x : x[1] )[0]
+
+            k_min = min(k_min, k_ii)
+
+            if k_ii < i:
+                tmp = Q2[:,i]
+                Q2[:,i] = Q2[:,k_ii]
+                Q2[:,k_ii] = tmp
+
+                tmp = todecode[i]
+                todecode[i] = todecode[k_ii]
+                todecode[k_ii] = todecode[i]
+
+            if k_min < i:
+                a = Q2[i,k_min:i]
+                e = np.concatenate((np.zeros(i-k_min),[1]))
+
+                u = (a - np.linalg.norm(a)*e)/np.linalg.norm(a - np.linalg.norm(a)*e)
+
+                w1 = np.matmul(u,np.transpose(np.conj(a)))
+                w2 = np.matmul(a,np.transpose(np.conj(u)))
+                w = w1/w2
+
+                householder=np.eye(i-k_min)-(1+w)*np.matmul(np.transpose(np.conj(u)),u)
+
+                Q2[:i,kmin:i+1] = np.matmul(Q2[:i,kmin:i+1], householder)
+                Q1[:,kmin:i+1] = np.matmul(Q1[:,kmin:i+1],householder)
+
+        #R = 1/(channel.shape[1]/tolin(snr))*np.linalg.pinv(Q2)
+
+        estimate = np.matmul(np.transpose(np.conj(Q1)),data_input)
+
+
+
+
+        return estimate
+
+
 class SphereDetector(Detector):
     def __init__(self):
         super().__init__()
