@@ -41,93 +41,19 @@ class LatticeReductionAided(Precoder):
 
 
     def lllComplexReduction(self, basis, delta):
-        basis = np.array(basis)
+        M = np.shape(basis)[1]
+        Q, R = self.GramSchmidt(basis)
+        print(basis)
+        print(Q@R)
 
-        m, n = basis.shape
+        '''
+        beta = abs()
+        mu = 
 
-        norm_basis = np.zeros([n])
+        k=1
+        i_counter = 0
+        '''
 
-        for j in range(n):
-            norm_basis[j] = np.inner(np.conjugate(basis[:,j]),basis[:,j])
-
-        mu = np.zeros([n,n])
-
-        for j in range(n):
-            for i in range(j+1,n):
-                inner = np.inner(np.conjugate(basis[:,j]),basis[:,i])
-                facsum = sum([np.conjugate(mu[j][k])*mu[i][k]*norm_basis[k] for k in range(1,j-1)])
-                mu[i][j] = (1/norm_basis[j])*(inner - facsum)
-                norm_basis[i] = norm_basis[i] - norm_basis[j]
-            #endfor
-        #endfor
-
-        U = np.identity(n)
-        k = 1
-
-        while (k <= n-1):
-            if (np.real(mu[k][k-1])>0.5) or (np.imag(mu[k][k-1])>0.5):
-                basis, U, mu = self.sizeReduce(basis,U,mu,k,k-1)
-
-            if (norm_basis[k] >= 
-                (delta - (mu[k][k-1]*np.conjugate(mu[k][k-1])))*norm_basis[k-1]):
-                basis, norm_basis, mu = self.swapUpdate(basis, norm_basis, mu, k)
-                
-                temp = U[:,k]
-                U[:,k] = U[:,k-1]
-                U[:,k-1] = temp
-
-                k = max(1,k-1)
-            else:
-                for j in reversed(range(k-1)):
-                    if (np.real(mu[k][j])>0.5) or (np.imag(mu[k][j])>0.5):
-                        basis, U, mu = self.sizeReduce(basis,U,mu,k,j)
-                k = k+1
-
-        return basis, U
-
-
-    def sizeReduce(self,basis, U, mu, k, j):
-        c = int(np.real(mu[k][j])) + 1j*int(np.imag(mu[k][j]))
-        basis[:,k] = basis[:,k] - c*basis[:,j]
-        U[:,k] = U[:,k] - c*U[:,j]
-
-        for l in range(j):
-            mu[k][l] = mu[k][l] - c*mu[j][l]
-
-        return basis, U, mu
-
-
-
-    def swapUpdate(self,basis,norm_basis, mu, k):
-        m, n = basis.shape
-        new_basis_k_1 = basis[:,k-1]
-        basis[:,k-1] = basis[:,k]
-        basis[:,k] = new_basis_k_1
-
-        norm_copy = np.copy(norm_basis)
-        mu_copy = np.copy(mu)
-
-        norm_mu = mu[k][k-1]*np.conjugate(mu[k][k-1])
-        norm_copy[k-1] = norm_basis[k] + norm_mu*norm_basis[k-1]
-
-        mu_copy[k][k-1] = np.conjugate(mu[k][k-1])*(norm_basis[k-1]/norm_copy[k-1])
-        
-        new_norm_mu = mu_copy[k][k-1]*np.conjugate(mu_copy[k][k-1])
-        norm_copy[k] = norm_basis[k-1] - new_norm_mu*norm_copy[k-1]
-
-        for i in range(k,n):
-            mu_copy[i][k-1] = mu[i][k-1]*mu_copy[k][k-1] + mu[i][k]*(norm_basis[k]/norm_copy[k-1])
-
-        for i in range(k,n):
-            mu_copy[i][k] = mu[i][k-1] - mu[i][k]*mu[k][k-1]
-
-        for j in range(0,k-1):
-            mu_copy[k-1][j] = mu[k][j]
-
-        for j in range(0,k-1):
-            mu_copy[k][j] = mu[k-1][j]
-
-        return basis, norm_copy, mu_copy
 
 
     def lllRealReduction(self, basis, delta):
@@ -167,18 +93,30 @@ class LatticeReductionAided(Precoder):
 
     def GramSchmidt(self, basis):
         m, n = np.shape(basis)
-        Q = np.zeros([m,n])
 
+        # Q is a  MxN Orthogonal matrix and R is a NxN upper triangular matrix
+        Q = np.zeros([m,n])
         R = np.zeros([n,n])
 
-        Q[0] = basis[0]
-        for i in range(1,n):
+        # Q[n] is equal the vector basis[n] minus the projection on the other vectors
+        #Q[0] = basis[0]
+        #for i in range(1,n):
+        for i in range(n):
             Q[i] = basis[i]
             
             for j in range(i):
-                R[i][j] = (Q[j].conj().T@Q[i])/np.inner(Q[j],Q[j])
+                # R is the value of the projection if vector Q[i] on vector Q[j]
+                #R[i][j] = (Q[j].conj().T@Q[i])/np.inner(Q[j],Q[j])
+                R[i][j] = (basis[i]@Q[j].conj().T)/np.inner(Q[j],Q[j])
+
+                # Q[i] is now orthogonal
                 Q[i] = Q[i] - R[i][j]*Q[j]
+                
+            # Now Q[i] is orthonormal
+            Q[i] = Q[i]/np.linalg.norm(Q[i])
 
-            #R[i][i] = Q[i].conj().T@basis[i]/np.linalg.norm(Q[i])/np.linalg.norm(Q[i])
+            # R is equal to the dot product between normalized Q[i] and basis[i]
+            R[i][i] = np.matrix(Q[i])@basis[i].conj().T#/np.linalg.norm(Q[i])/np.linalg.norm(Q[i])
 
-        return Q #, R.conj().transpose()
+
+        return Q, R.conj().transpose()
