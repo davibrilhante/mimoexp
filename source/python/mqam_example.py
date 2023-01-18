@@ -131,12 +131,12 @@ if __name__ == '__main__':
                 received[i] =  signal + channel.noise.sample()
 
             # Symbol by symbol Zero-Forcing detection
-            sic_detector = ZeroForcingSic()
-            sic_detected = []
+            detector = ZeroForcing()
+            detected = []
             for n, symbol in enumerate(received):
-                sic_detected.append(sic_detector.detect(symbol, h_red[n], constellation))
+                detected.append(detector.detect(symbol, h_red[n], constellation))
 
-            demodulated =  demodulator.demodulate(sic_detected)
+            demodulated =  demodulator.demodulate(detected)
 
         elif args.msesic:
             lmse_detector = MeanSquaredErrorSic()
