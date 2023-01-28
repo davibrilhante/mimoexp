@@ -2,9 +2,9 @@
 # -*- docing : utf8 -*-                                                         
 import numpy as np
 from detectors import ZeroForcingSic
-import sage.all
-from sage.all import Matrix,vector,ZZ, QQ, CC
-from olll import reduction
+#import sage.all
+#from sage.all import Matrix,vector,ZZ, QQ, CC
+#from olll import reduction
 
 class Precoder:
     def __init__(self):
@@ -16,6 +16,7 @@ class Precoder:
 class LatticeReductionAided(Precoder):
     def __init__(self):
         super().__init__()
+        self.type = 'real'
 
     def precode(self, channel, delta=3/4):
         h_red = []
@@ -28,32 +29,84 @@ class LatticeReductionAided(Precoder):
             #h_1 = Matrix(QQ,np.matrix(np.real(ch))).LLL(delta)
             #h_1 = reduction(np.real(ch), delta)
             #print(h_1)
-            red_real = self.lllRealReduction(np.real(ch).T, delta).T
-            red_imag = self.lllRealReduction(np.imag(ch).T, delta).T
+            if self.type == 'complex':
+                h_red.append(self.lllComplexReduction(ch,delta))
 
-            h_red.append(red_real + 1j*red_imag)
+            elif self.type == 'real':
+                red_real = self.lllRealReduction(np.real(ch).T, delta).T
+                red_imag = self.lllRealReduction(np.imag(ch).T, delta).T
+                h_red.append(red_real + 1j*red_imag)
+
+            else:
+                raise NotImplementedError
+
             h_inv = np.linalg.pinv(ch)
             U.append(np.matmul(h_inv, h_red[-1]))
-
-
 
         return np.array(U), np.array(h_red)
 
 
     def lllComplexReduction(self, basis, delta):
+        #Each column is a base vector, so we make M the number of columns
         M = np.shape(basis)[1]
-        Q, R = self.GramSchmidt(basis.T)
-        print(basis)
-        print(Q@R)
 
-        '''
-        beta = abs()
-        mu = 
+        #QR orthogonalization via Gram-Schmidt
+        #Q, R = self.GramSchmidt(basis)
+        Q,R = np.linalg.qr(basis)
 
-        k=1
-        i_counter = 0
-        '''
+        #Squared length of orthogonal vectors
+        beta = abs(np.diag(R))**2
 
+        Mu = R/(np.diag(np.diag(R))@np.ones(M))
+        Mu = Mu.T
+
+        k = 1
+        i_iteration = 0
+
+        while (i_iteration < 100*M**2):
+            i_iteration += 1
+            if (abs(np.real(Mu[k,k-1])) > 0.5) or (abs(np.imag(Mu[k,k-1])) > 0.5):
+                basis, Mu = self.size_reduce(basis,Mu,k,k-1)
+
+
+            if (beta[k] < delta - beta[k-1]*abs(Mu[k,k-1])**2):
+                #Swap k with k-1 if k-1th vector is longer than kth
+                b = basis[:,k]
+                basis[:,k] = basis[:,k-1]
+                basis[:,k-1] = b
+
+                #Swap the kth column and the k-1th column
+                muswap = Mu[k-1,:k-2]
+                Mu[k-1,:k-2] = Mu[k,:k-2]
+                Mu[k,:k-2] = muswap
+
+                old_muk = Mu[k+1:M,k]
+                old_beta1 = beta[k-1]
+                old_betak = beta[k]
+                old_mu = Mu[k,k-1]
+
+                Mu[k+1:M,k] = Mu[k+1:M,k-1] - Mu[k+1:M,k]*Mu[k,k-1]
+                beta[k-1] = beta[k] + beta[k-1]*abs(Mu[k,k-1])**2
+                beta[k] = beta[k]*old_beta1/beta[k-1]
+                Mu[k,k-1] = Mu[k,k-1].T*old_beta1/beta[k-1]
+                Mu[k+1:M,k-1] = Mu[k+1:M,k-1]*Mu[k,k-1] + old_muk*old_betak/beta[k-1]
+
+                if k>1:
+                    k -= 1
+
+            else:
+                for i in range(k-3,0,-1):
+                    if (abs(np.real(Mu[k,k-1])) > 0.5 or abs(np.imag(Mu[k,k-1])) > 0.5):
+                        basis, Mu = self.size_reduce(basis,Mu,k,i)
+                if k<M-1:
+                    k += 1
+                else:
+                    basis_reduced = basis
+                    Mu = abs(Mu)
+                    return basis_reduced
+
+        basis_reduced = basis
+        return basis_reduced
 
 
     def lllRealReduction(self, basis, delta):
@@ -91,6 +144,17 @@ class LatticeReductionAided(Precoder):
         v = B[:,i]
         u = Q[:,j]
         return (u.conj().T@v)/(u.conj().T@u)
+
+    def size_reduce(self, basis, Mu, k, j):
+        eta = round(Mu[k,j])
+        basis[:,k] = basis[:,k] - eta*basis[:,j]
+        for i in range(j-1):
+            Mu[k,i] = Mu[k,i] - eta*Mu[j,i]
+
+        Mu[k,j] = Mu[k,j] - eta
+
+        return basis, Mu
+
 
     def GramSchmidt(self, basis, norm=False):
         m, n = np.shape(basis)

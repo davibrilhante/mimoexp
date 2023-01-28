@@ -122,6 +122,7 @@ if __name__ == '__main__':
 
         elif args.lra:    
             precoder = LatticeReductionAided()
+            precoder.type = 'complex'
             received, channel_estimate, noisevar = channel.response(encoded_data, SNR)
             U, h_red = precoder.precode(channel_estimate)
 
