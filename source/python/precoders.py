@@ -88,32 +88,45 @@ class LatticeReductionAided(Precoder):
         #Q,R = np.linalg.qr(basis)
 
         #Squared length of orthogonal vectors
-        beta = abs(np.diag(R))**2
+        Rdiag = np.diag(R)
+        beta = abs(Rdiag)**2
 
-        Mu = R/(np.diag(np.diag(R))@np.ones(M))
+        Mu = R/(np.diag(Rdiag)@np.ones((M,M)))
         Mu = Mu.T
+        #print(Mu)
 
         k = 1
-        i_iteration = 0
+        i_iteration = -1
 
         while (i_iteration < 100*M**2):
             i_iteration += 1
-            if (abs(np.real(Mu[k,k-1])) > 0.5) or (abs(np.imag(Mu[k,k-1])) > 0.5):
+
+            #print(round(abs(np.real(Mu[k,k-1])),5))
+            #print(abs(np.imag(Mu[k,k-1])))
+            if (round(abs(np.real(Mu[k,k-1])),5) > 0.5 or round(abs(np.imag(Mu[k,k-1])),5) > 0.5):
                 basis, Mu = self.size_reduce(basis,Mu,k,k-1)
+                #print(basis)
+                #print(Mu)
 
 
-            if (beta[k] < delta - beta[k-1]*abs(Mu[k,k-1])**2):
+            #print(beta[k])
+            #print((delta - abs(Mu[k,k-1])**2)*beta[k-1])
+            #print()
+            if (beta[k] < (delta - abs(Mu[k,k-1])**2)*beta[k-1]):
                 #Swap k with k-1 if k-1th vector is longer than kth
-                b = basis[:,k]
+                b = np.copy(basis[:,k])
                 basis[:,k] = basis[:,k-1]
                 basis[:,k-1] = b
+                #print(basis[:,k])
+                #print(basis[:,k-1])
 
                 #Swap the kth column and the k-1th column
-                muswap = Mu[k-1,:k-2]
-                Mu[k-1,:k-2] = Mu[k,:k-2]
-                Mu[k,:k-2] = muswap
+                muswap = np.copy(Mu[k-1,0:k-1])
+                Mu[k-1,0:k-1] = Mu[k,0:k-1]
+                Mu[k,0:k-1] = muswap
 
-                old_muk = Mu[k+1:M,k]
+                #The might be in these indexes
+                old_muk = np.copy(Mu[k+1:M,k])
                 old_beta1 = beta[k-1]
                 old_betak = beta[k]
                 old_mu = Mu[k,k-1]
@@ -128,21 +141,26 @@ class LatticeReductionAided(Precoder):
                     k -= 1
 
             else:
-                for i in range(k-3,0,-1):
-                    if (abs(np.real(Mu[k,k-1])) > 0.5 or abs(np.imag(Mu[k,k-1])) > 0.5):
+                #The error might be here
+                #print(basis)
+                for i in range(k-1,0,-1):
+                    #print(abs(np.real(Mu[k,k-1])))
+                    #print(abs(np.imag(Mu[k,k-1])))
+                    if (round(abs(np.real(Mu[k,k-1])),5) > 0.5 or round(abs(np.imag(Mu[k,k-1])),5) > 0.5):
+                        #print('Entrou')
                         basis, Mu = self.size_reduce(basis,Mu,k,i)
 
                 if k<M-1:
                     k += 1
 
                 else:
-                    basis_reduced = basis
+                    basis_reduced = np.copy(basis)
                     Mu = abs(Mu)
                     return basis_reduced
 
         # i_iteration exceeded the limit, so return basis so far.
         # This is the sub-optimal solution
-        basis_reduced = basis
+        basis_reduced = np.copy(basis)
         return basis_reduced
 
 
@@ -190,8 +208,14 @@ class LatticeReductionAided(Precoder):
     def size_reduce(self, basis, Mu, k, j):
         eta = round(Mu[k,j])
         basis[:,k] = basis[:,k] - eta*basis[:,j]
-        for i in range(j-1):
+        #print(basis)
+
+        # Perhaps the error is here!
+        for i in range(j):
+            #print(Mu[k,i], Mu[j,i])
             Mu[k,i] = Mu[k,i] - eta*Mu[j,i]
+
+        #print(Mu)
 
         Mu[k,j] = Mu[k,j] - eta
 
